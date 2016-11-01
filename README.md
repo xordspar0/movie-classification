@@ -14,21 +14,21 @@ To select our data, we used the IMDB alternative interfaces database, which cont
 
 For these, we will be evaluating them based on:
 
-1. Year of release
+* Year of release
 
-2. Running time
+* Running time
 
-3. Average rating
+* Average rating
 
-4. Country of origin
+* Country of origin
 
-5. Spoken language
+* Spoken language
 
-6. Directors
+* Directors
 
-7. Writers
+* Writers
 
-etc.
+* etc.
 
 For the non-numeric data (language and country of origin), we will be assigning binary values (1 or 0) for each column.
 
