@@ -4,24 +4,14 @@ import re
 import sys
 import urllib.request
 
-# Input files:
-# movieFile = 'ftp://ftp.fu-berlin.de/pub/misc/movies/database/genres.list.gz'
-# dataFiles = [
-#         'ftp://ftp.fu-berlin.de/pub/misc/movies/database/countries.list.gz',
-#         'ftp://ftp.fu-berlin.de/pub/misc/movies/database/language.list.gz',
-#         'ftp://ftp.fu-berlin.de/pub/misc/movies/database/running-times.list.gz',
-#         'ftp://ftp.fu-berlin.de/pub/misc/movies/database/ratings.list.gz',
-#         'ftp://ftp.fu-berlin.de/pub/misc/movies/database/directors.list.gz',
-#         'ftp://ftp.fu-berlin.de/pub/misc/movies/database/writers.list.gz']
-#
-movieFile = 'ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/genres.list.gz'
+movieFile = 'data/genres.list.gz'
 dataFiles = [
-        'ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/countries.list.gz',
-        'ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/language.list.gz',
-        'ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/running-times.list.gz',
-        'ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/ratings.list.gz',
-        'ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/directors.list.gz',
-        'ftp://ftp.funet.fi/pub/mirrors/ftp.imdb.com/pub/writers.list.gz']
+        'data/countries.list.gz',
+        'data/language.list.gz',
+        'data/running-times.list.gz',
+        'data/ratings.list.gz',
+        'data/directors.list.gz',
+        'data/writers.list.gz']
 
 # Output file:
 workingDir = os.path.dirname(os.path.realpath(__file__)) + '/'
@@ -41,8 +31,8 @@ data = []
 # Compile the regex patterns for the movie attributes.
 titleRE = re.compile(r'(.+) \((\d+)\S*\)')
 res = {
-    'generic' : re.compile(r'.+ \(\d+\S*\).*\s+(\w+)$'),
-    'time' : re.compile(r'.+ \(\d+\S*\).*\d+(\s+\(.+\))*$'),
+    'generic' : re.compile(r'.+ \(\d+\S*\).*\s+(\w+)(\s+\(.+\))*$'),
+    'time' : re.compile(r'.+ \(\d+\S*\).*(\d+)(\s+\(.+\))*$'),
     'ratings' : re.compile(r'^\s+[0-9.]+\s+[0-9]+\s+([0-9.]+)')
 }
 
@@ -91,7 +81,7 @@ with open('/home/jordan/Downloads/genres.list', encoding='iso-8859-1') as movieL
                 'writers' : {}
             })
 
-print('Collected ' + len(data) + ' movies.')
+print('Collected ' + str(len(data)) + ' movies.')
 
 fields = ['country', 'language', 'time', 'rating', 'directors', 'writers']
 for i in range(0, 4):
@@ -120,6 +110,9 @@ for i in range(0, 4):
                 except IndexError:
                     print('Finised collecting ' + fields[i] + '...')
                     break
+
+# Find the each movie's director.
+
 
 #################################
 # Write the data out to a file. #
