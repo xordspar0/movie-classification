@@ -73,9 +73,6 @@ print('Collected ' + str(len(data)) + ' movies.', file=sys.stderr)
 fields = ['country', 'language', 'time', 'rating']
 for i in range(0, len(fields)):
     with open(dataFiles[i], encoding='iso-8859-1') as dataFile:
-        if dataFiles[i] == 'data/ratings.list':
-            # Skip the confusing garbage at the beginning of the ratings file.
-            dataFile.read(15545)
         lastTitle = ''
         for movie in data:
             # Read through the file until we find the data for the current movie.
@@ -106,7 +103,7 @@ for i in range(0, len(fields)):
 
         print('Finished collecting ' + fields[i] + '...', file=sys.stderr)
 
-# Find the each movie's director.
+# Find the director for each movie.
 
 
 #################################

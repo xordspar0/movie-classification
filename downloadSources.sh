@@ -15,3 +15,7 @@ for url in ${urls[@]}; do
     file=$(echo $url | grep -Eo '[a-z-]+\.list')
     curl $url | gunzip > "data/$file"
 done
+
+# Remove garbage at the beginning of files.
+sed -i '1,296d' data/ratings.list
+sed -i '1,235d' data/directors.list
