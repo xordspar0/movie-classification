@@ -1,17 +1,16 @@
-import gzip
 import os.path
 import re
 import sys
-import urllib.request
 
-movieFile = 'data/genres.list.gz'
+# Input files:
+movieFile = 'data/genres.list'
 dataFiles = [
-        'data/countries.list.gz',
-        'data/language.list.gz',
-        'data/running-times.list.gz',
-        'data/ratings.list.gz',
-        'data/directors.list.gz',
-        'data/writers.list.gz']
+        'data/countries.list',
+        'data/language.list',
+        'data/running-times.list',
+        'data/ratings.list',
+        'data/directors.list',
+        'data/writers.list']
 
 # Output file:
 workingDir = os.path.dirname(os.path.realpath(__file__)) + '/'
@@ -36,8 +35,7 @@ res = {
     'ratings' : re.compile(r'^\s+[0-9.]+\s+[0-9]+\s+([0-9.]+)')
 }
 
-# with gzip.open(urllib.request.urlopen(movieFile)) as movieList:
-with open('/home/jordan/Downloads/genres.list', encoding='iso-8859-1') as movieList:
+with open(movieFile, encoding='iso-8859-1') as movieList:
     i = 0 # for debugging
     for line in movieList:
         # debug
@@ -45,8 +43,6 @@ with open('/home/jordan/Downloads/genres.list', encoding='iso-8859-1') as movieL
         if i == 500:
             break
         # end debug
-
-        # line = line.decode('iso-8859-1')
 
         title = ''
         year = ''
@@ -86,10 +82,8 @@ print('Collected ' + str(len(data)) + ' movies.')
 fields = ['country', 'language', 'time', 'rating', 'directors', 'writers']
 for i in range(0, 4):
     dbSeek = 0
-    with gzip.open(urllib.request.urlopen(dataFiles[i])) as dataFile:
+    with open(dataFiles[i], encoding='iso-8859-1') as dataFile:
         for line in dataFile:
-            line = line.decode('iso-8859-1')
-
             try:
                 match = res[fields[i]].search(line)
             except KeyError:
