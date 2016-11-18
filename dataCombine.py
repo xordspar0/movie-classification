@@ -11,13 +11,6 @@ dataFiles = [
         'data/ratings.list',
         'data/directors.list']
 
-# Output file:
-workingDir = os.path.dirname(os.path.realpath(__file__)) + '/'
-if len(sys.argv) == 2:
-    outputFile = sys.argv[1]
-else:
-    outputFile = workingDir + 'movies.tsv'
-
 ########################################
 # Construct our data from the sources. #
 ########################################
@@ -122,21 +115,18 @@ for i in range(0, len(fields)):
 
 print(file=sys.stderr)
 
-with open(outputFile, mode='w') as f:
-    headerString = 'Title\tYear\tCountry\tLanguage\tRunning time\tRating\tGenre'
-    print(headerString)
-    print(headerString, file=f)
-    for movie in data:
-        outputString = '\t'.join([
-            movie['title'],
-            movie['year'],
-            movie['country'],
-            movie['language'],
-            # movie['director'],
-            str(movie['time']),
-            str(movie['rating']),
-            movie['genre']
-        ])
+headerString = 'Title\tYear\tCountry\tLanguage\tRunning time\tRating\tGenre'
+print(headerString)
+for movie in data:
+    outputString = '\t'.join([
+        movie['title'],
+        movie['year'],
+        movie['country'],
+        movie['language'],
+        # movie['director'],
+        str(movie['time']),
+        str(movie['rating']),
+        movie['genre']
+    ])
 
-        print(outputString)
-        print(outputString, file=f)
+    print(outputString)
