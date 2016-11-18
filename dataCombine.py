@@ -9,8 +9,7 @@ dataFiles = [
         'data/language.list',
         'data/running-times.list',
         'data/ratings.list',
-        'data/directors.list',
-        'data/writers.list']
+        'data/directors.list']
 
 # Output file:
 workingDir = os.path.dirname(os.path.realpath(__file__)) + '/'
@@ -28,11 +27,11 @@ analyzedGenres = ['Drama', 'Comedy', 'Documentary']
 data = []
 
 # Compile the regex patterns for the movie attributes.
-titleRE = re.compile(r'(.+) \((\d+)\S*\)')
+titleRE = re.compile(r'(?P<title>.+) \((?P<year>\d+)\S*\)')
 res = {
-    'generic' : re.compile(r'.+ \(\d+\S*\).*\s+(\w+)(\s+\(.+\))*$'),
-    'time' : re.compile(r'.+ \(\d+\S*\).*(\d+)(\s+\(.+\))*$'),
-    'ratings' : re.compile(r'^\s+[0-9.]+\s+[0-9]+\s+([0-9.]+)')
+    'generic' : re.compile(r'(?P<title>.+) \(\d+\S*\).*\s+(?P<field>\w+)(?:\s+\(.+\))*$'),
+    'time' : re.compile(r'(?P<title>.+) \(\d+\S*\)\s+(?P<field>\d+)(?:\s+\(.+\))*$'),
+    'rating' : re.compile(r'^\s+[0-9.*]+\s+[0-9]+\s+(?P<field>[0-9.]+)\s+(?P<title>\S.+) \(\d+\S*\)')
 }
 
 with open(movieFile, encoding='iso-8859-1') as movieList:
@@ -52,10 +51,10 @@ with open(movieFile, encoding='iso-8859-1') as movieList:
         genreMatch = res['generic'].search(line)
 
         if titleMatch:
-            title = titleMatch.group(1)
-            year = titleMatch.group(2)
+            title = titleMatch.group('title')
+            year = titleMatch.group('year')
         if genreMatch:
-            genre = genreMatch.group(1)
+            genre = genreMatch.group('field')
 
         # Skip if:
         # This movie isn't in one of the genres we're interested in.
@@ -70,40 +69,49 @@ with open(movieFile, encoding='iso-8859-1') as movieList:
                 'year': year,
                 'genre': genre,
                 'country' : '',
+                'director' : '',
                 'language' : '',
-                'time' : -1,
-                'rating' : -1,
-                'directors' : {},
-                'writers' : {}
+                'time' : '',
+                'rating' : '',
             })
 
-print('Collected ' + str(len(data)) + ' movies.')
+print('Collected ' + str(len(data)) + ' movies.', file=sys.stderr)
 
-fields = ['country', 'language', 'time', 'rating', 'directors', 'writers']
-for i in range(0, 4):
-    dbSeek = 0
+fields = ['country', 'language', 'time', 'rating']
+for i in range(0, len(fields)):
     with open(dataFiles[i], encoding='iso-8859-1') as dataFile:
-        for line in dataFile:
-            try:
-                match = res[fields[i]].search(line)
-            except KeyError:
-                match = res['generic'].search(line)
+        if dataFiles[i] == 'data/ratings.list':
+            # Skip the confusing garbage at the beginning of the ratings file.
+            dataFile.read(15545)
+        lastTitle = ''
+        for movie in data:
+            # Read through the file until we find the data for the current movie.
+            startPosition = dataFile.tell()
+            while True:
+                line = dataFile.readline()
 
-            if match:
-                title = titleRE.match(line).group(1)
-                fieldData = match.group(1)
+                # Give up on this movie if we reach the end of the file.
+                if line == '':
+                    dataFile.seek(startPosition)
+                    break
 
                 try:
-                    while data[dbSeek][fields[i]]:
-                        dbSeek += 1
+                    match = res[fields[i]].search(line)
+                except KeyError:
+                    match = res['generic'].search(line)
 
-                    while title != data[dbSeek]['title']:
-                        dbSeek += 1
+                if match:
+                    if match.group('title') == movie['title']:
+                        fieldData = match.group('field')
+                        movie[fields[i]] = fieldData
+                        lastTitle = title
+                        break
+                    elif match.group('title') > movie['title']:
+                        # We've passed the movie we're looking for. Give up.
+                        dataFile.seek(startPosition)
+                        break
 
-                    data[dbSeek][fields[i]] = fieldData
-                except IndexError:
-                    print('Finised collecting ' + fields[i] + '...')
-                    break
+        print('Finished collecting ' + fields[i] + '...', file=sys.stderr)
 
 # Find the each movie's director.
 
@@ -111,20 +119,24 @@ for i in range(0, 4):
 #################################
 # Write the data out to a file. #
 #################################
-print('Title\tYear\tCountry\tLanguage\tRunning time\tRating\tGenre')
-for movie in data:
-    outputString = '\t'.join([
-        movie['title'],
-        movie['year'],
-        movie['country'],
-        movie['language'],
-        str(movie['time']),
-        str(movie['rating'])
-    ])
 
-    # outputString = '\t'.join([outputString] + movie['directors'])
-    # outputString = '\t'.join([outputString] + movie['writers'])
+print(file=sys.stderr)
 
-    outputString = '\t'.join([outputString, movie['genre']])
+with open(outputFile, mode='w') as f:
+    headerString = 'Title\tYear\tCountry\tLanguage\tRunning time\tRating\tGenre'
+    print(headerString)
+    print(headerString, file=f)
+    for movie in data:
+        outputString = '\t'.join([
+            movie['title'],
+            movie['year'],
+            movie['country'],
+            movie['language'],
+            # movie['director'],
+            str(movie['time']),
+            str(movie['rating']),
+            movie['genre']
+        ])
 
-    print(outputString)
+        print(outputString)
+        print(outputString, file=f)
