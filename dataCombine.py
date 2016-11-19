@@ -62,9 +62,9 @@ with open(movieFile, encoding='iso-8859-1') as movieList:
             })
 
         # # End early, for debugging.
-        # if len(data) >= 10000:
+        # if len(data) >= 1000:
         #     break
-        #
+
 print('Collected ' + str(len(data)) + ' movies.', file=sys.stderr)
 
 fields = ['country', 'language', 'time', 'rating']
@@ -98,6 +98,11 @@ for i in range(0, len(fields)):
                         # We've passed the movie we're looking for. Give up.
                         dataFile.seek(startPosition)
                         break
+
+        # Clean out movies with missing data.
+        for j in range(len(data)-1, -1, -1):
+            if data[j][fields[i]] == '':
+                data.pop(j)
 
         print('\tdone.', file=sys.stderr)
 
