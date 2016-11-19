@@ -11,6 +11,14 @@ dataFiles = [
         'data/ratings.list',
         'data/directors.list']
 
+workingDir = os.path.dirname(os.path.realpath(__file__)) + '/'
+if len(sys.argv) == 3:
+    start = int(sys.argv[1])
+    n = int(sys.argv[2])
+else:
+    start = 0
+    n = float("inf")
+
 ########################################
 # Construct our data from the sources. #
 ########################################
@@ -27,8 +35,14 @@ res = {
     'rating' : re.compile(r'^\s+[0-9.*]+\s+[0-9]+\s+(?P<field>[0-9.]+)\s+(?P<title>\S.+) \(\d+\S*\)')
 }
 
-with open(movieFile, encoding='iso-8859-1') as movieList:
+with open(workingDir + movieFile, encoding='iso-8859-1') as movieList:
+    i = 0
     for line in movieList:
+        # Skip to the starting place.
+        if i < start:
+            i += 1
+            continue
+
         title = ''
         year = ''
         genre = ''
@@ -61,14 +75,15 @@ with open(movieFile, encoding='iso-8859-1') as movieList:
                 'rating' : '',
             })
 
-        if len(data) >= 10000:
+        # Stop when our limit number of movies is reached.
+        if len(data) >= n:
             break
 
 print('Collected ' + str(len(data)) + ' movies.', file=sys.stderr)
 
 fields = ['country', 'language', 'time', 'rating']
 for i in range(0, len(fields)):
-    with open(dataFiles[i], encoding='iso-8859-1') as dataFile:
+    with open(workingDir + dataFiles[i], encoding='iso-8859-1') as dataFile:
         print('Collecting ' + fields[i] + '...', file=sys.stderr)
         lastTitle = ''
         for movie in data:
@@ -117,7 +132,7 @@ directorRE = re.compile(r'(?P<director>[\S ]+)\t+(?P<title>[\S ]+) \(.....*\)')
 movieRE = re.compile(r'\t\t\t(?P<title>[\S ]+) \(.....*\)')
 metaRE = re.compile(r' \{.*\}$')
 print('Collecting director...', file=sys.stderr)
-with open(dataFiles[4], encoding='iso-8859-1') as dataFile:
+with open(workingDir + dataFiles[4], encoding='iso-8859-1') as dataFile:
     numberFound = 0
     currentDirector = ''
     lastTitle = ''
