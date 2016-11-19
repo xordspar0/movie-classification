@@ -22,7 +22,7 @@ data = []
 # Compile the regex patterns for the movie attributes.
 titleRE = re.compile(r'(?P<title>.+) \((?P<year>\d+)\S*\)')
 res = {
-    'generic' : re.compile(r'(?P<title>.+) \(\d+\S*\).*\s+(?P<field>\w+)(?:\s+\(.+\))*$'),
+    'generic' : re.compile(r'(?P<title>.+) \(\d+\S*\).*\s\s+(?P<field>\w+)(?:\s+\(.+\))*$'),
     'time' : re.compile(r'(?P<title>.+) \(\d+\S*\)\s+(?P<field>\d+)(?:\s+\(.+\))*$'),
     'rating' : re.compile(r'^\s+[0-9.*]+\s+[0-9]+\s+(?P<field>[0-9.]+)\s+(?P<title>\S.+) \(\d+\S*\)')
 }
@@ -61,9 +61,8 @@ with open(movieFile, encoding='iso-8859-1') as movieList:
                 'rating' : '',
             })
 
-        # # End early, for debugging.
-        # if len(data) >= 1000:
-        #     break
+        if len(data) >= 10000:
+            break
 
 print('Collected ' + str(len(data)) + ' movies.', file=sys.stderr)
 
@@ -89,30 +88,45 @@ for i in range(0, len(fields)):
                     match = res['generic'].search(line)
 
                 if match:
+                    if match.group('title') == lastTitle:
+                        continue
+                    else:
+                        lastTitle = match.group('title')
                     if match.group('title') == movie['title']:
                         fieldData = match.group('field')
                         movie[fields[i]] = fieldData
-                        lastTitle = title
                         break
-                    elif match.group('title') > movie['title']:
+                    elif match.group('title')[0:3] > movie['title'][0:3]:
                         # We've passed the movie we're looking for. Give up.
                         dataFile.seek(startPosition)
                         break
 
         # Clean out movies with missing data.
+        count = 0
         for j in range(len(data)-1, -1, -1):
             if data[j][fields[i]] == '':
                 data.pop(j)
+                count += 1
 
-        print('\tdone.', file=sys.stderr)
+        if count > 0:
+            print('\tCulled ' + str(count) + '.', file=sys.stderr)
+        print('\tDone.', file=sys.stderr)
 
 # Find the director for each movie.
-directorRE = re.compile(r'(?P<director>[\S ]+)\t+(?P<title>[\S ]+) \(.+\)')
-movieRE = re.compile(r'\t\t\t(?P<title>.*) \(\S+\)')
+directorRE = re.compile(r'(?P<director>[\S ]+)\t+(?P<title>[\S ]+) \(.....*\)')
+movieRE = re.compile(r'\t\t\t(?P<title>[\S ]+) \(.....*\)')
+metaRE = re.compile(r' \{.*\}$')
 print('Collecting director...', file=sys.stderr)
 with open(dataFiles[4], encoding='iso-8859-1') as dataFile:
+    numberFound = 0
     currentDirector = ''
+    lastTitle = ''
     for line in dataFile:
+        # Throw away any metadata.
+        metaMatch = metaRE.search(line)
+        if metaMatch:
+            line = line[0:metaMatch.span()[0]]
+
         directorMatch = directorRE.match(line)
         foundTitle = ''
         if directorMatch:
@@ -124,17 +138,32 @@ with open(dataFiles[4], encoding='iso-8859-1') as dataFile:
                 foundTitle = movieMatch.group('title')
 
         if foundTitle:
+            if foundTitle == lastTitle:
+                # Skip duplicates.
+                continue
             try:
                 movie = next((movie for movie in data if movie['title'] == foundTitle))
-                movie['director'] = currentDirector
+                if not movie['director']:
+                    movie['director'] = currentDirector
+                    numberFound += 1
             except StopIteration:
                 pass
-print('\tdone.', file=sys.stderr)
+            lastTitle = foundTitle
 
-# Remove any movies with missing data.
-for i in range(len(data)-1, -1, -1):
-    if '' in data[i].values():
-        data.pop(i)
+        if numberFound >= len(data):
+            # We've found everything and can stop searching.
+            break
+
+# Clean out movies with missing data.
+count = 0
+for j in range(len(data)-1, -1, -1):
+    if data[j]['director'] == '':
+        data.pop(j)
+        count += 1
+
+if count > 0:
+    print('\tCulled ' + str(count) + '.', file=sys.stderr)
+print('\tdone.', file=sys.stderr)
 
 #################################
 # Write the data out to a file. #
