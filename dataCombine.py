@@ -13,7 +13,7 @@ dataFiles = [
 
 workingDir = os.path.dirname(os.path.realpath(__file__)) + '/'
 if len(sys.argv) in [2, 4]:
-    movieFile = sys.argv.pop(2)
+    movieFile = sys.argv.pop(1)
 if len(sys.argv) == 3:
     start = int(sys.argv[1])
     n = int(sys.argv[2])
